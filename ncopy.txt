@@ -1,0 +1,85 @@
+#/* $begin ncopy-ys */
+##################################################################
+# ncopy.ys - Copy a src block of len ints to dst.
+# Return the number of positive ints (>0) contained in src.
+#
+# Tien Ho - 00111065
+#
+# In this program, the iaddl method is implemented in the 
+# pipe-full.hcl. This method is used to replace the irmovl and 
+# subl instructions.  Then a loop unrolling by a factor of 2
+# is performed in which the number of iterations is reduced
+# by 2 and the body of the loop is replicated by 2.  Also,
+# in order to prevent load/use hazard of mrmovl, we use the 
+# technique of scheduling code in which a set of instructions 
+# are rearranged.  The combination of iaddl, loop unrolling, 
+# and scheduling helps optimize the pipeline performance and 
+# as a result reduces the CPE to 10.93. 
+#
+##################################################################
+# Do not modify this portion
+# Function prologue.
+ncopy:	
+	pushl %ebp		# Save old frame pointer
+	rrmovl %esp,%ebp        # Set up new frame pointer
+	pushl %esi		# Save callee-save regs
+	pushl %ebx
+	pushl %edi
+	mrmovl 8(%ebp),%ebx	# src
+	mrmovl 16(%ebp),%edx	# len
+	mrmovl 12(%ebp),%ecx	# dst
+
+##################################################################
+# You can modify this portion
+	# Loop header
+        xorl %eax,%eax          # count = 0
+	xorl %edi, %edi         
+        andl %edx, %edx         # len <= 0 ?
+        jle Done
+	iaddl $-1, %edx         # len = len - 1
+        jle Check               # only do loop unrolling if there are
+                                # more than 1 element in src
+firstLoop:   
+	mrmovl (%ebx), %esi     # read val from src...
+	mrmovl 4(%ebx), %edi    # read the next val from src
+			        # this is an example of scheduling 
+			        # to prevent load/use hazard of %esi
+        rmmovl %esi, (%ecx)     # ...and store it to dst
+        andl %esi, %esi         # val  <= 0?
+        jle secondLoop          # if so, goto secondLoop:
+        iaddl $1, %eax          # count++
+secondLoop:	
+        rmmovl %edi, 4(%ecx)    # store the next val to the next dst
+        andl %edi, %edi         # val <= 0?
+        jle Next                # if so, goto Next:
+        iaddl $1, %eax          # count++
+Next:   
+	iaddl $8, %ebx          # src + 2
+	iaddl $8, %ecx          # dst + 2
+	iaddl $-2, %edx         # len = len - 2
+	andl %edx, %edx         # len > 0?
+	jg firstLoop            # if so, goto firstLoop:
+Check:  
+	iaddl $1, %edx          # len++
+	je Done                 # if len = 0 -> even -> goto Done
+				# if len > 1, there is one remaining 
+                                # element not taken care of
+        mrmovl (%ebx), %esi     # read val from src...
+        rmmovl %esi, (%ecx)     # ...and store it to dst
+        andl %esi, %esi         # val <= 0?
+        jle Done                # if so, goto Done:
+        iaddl $1, %eax          # count++
+##################################################################
+# Do not modify the following section
+# Function epilogue
+Done:	
+	popl %edi               # restore callee-save registers
+        popl %ebx
+        popl %esi
+        rrmovl %ebp, %esp
+        popl %ebp
+        ret
+##################################################################
+# Keep the following label at the end of your function
+End:
+#/* $end ncopy-ys */
