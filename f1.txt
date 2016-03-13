@@ -1,0 +1,33 @@
+	.file	"fib.c"
+	.text
+	.globl	fib
+	.type	fib, @function
+fib:                                      fib:
+.LFB23:                                    LFB23:
+	subl	$28, %esp                         irmovl $28, %ecx
+	movl	%ebx, 20(%esp)                    subl %ecx, %esp
+	movl	%esi, 24(%esp)                    rmmovl %ebx, 20(%esp)
+	movl	32(%esp), %ebx                    rmmovl %esi, 24(%esp)
+	movl	$1, %eax                          mrmovl 32(%esp), %ebx
+	cmpl	$1, %ebx                          irmovl $1, %eax
+	jle	.L2                                   irmovl $1, %edx
+	leal	-1(%ebx), %eax                    subl %edx, %ebx
+	movl	%eax, (%esp)                      jle L2
+	call	fib                               immovl $-1, %edx
+	movl	%eax, %esi                        addl %edx, %ebx
+	subl	$2, %ebx                          rrmovl %ebx, %eax
+	movl	%ebx, (%esp)                      rmmovl %eax, (%esp)
+	call	fib                               call fib
+	addl	%esi, %eax                        rrmovl %eax, %esi
+.L2:                                          irmovl $2, %edx
+	movl	20(%esp), %ebx                    subl %edx, %ebx
+	movl	24(%esp), %esi                    rmmovl %ebx, (%esp)
+	addl	$28, %esp                         call fib
+	ret                                       addl %esi, %eax
+	.string	"fib(%d)=%d\n"                 L2:
+                                              mrmovl 20(%esp), %ebx
+                                              mrmovl 24(%esp), %esi
+                                              irmovl $28, %edx
+                                              addl %edx, %esp
+                                              .string	"fib(%d)=%d\n"
+

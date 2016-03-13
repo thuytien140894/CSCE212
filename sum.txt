@@ -1,0 +1,58 @@
+/* $begin code-yso */
+/* $begin code-ysa */
+# Execution begins at address 0 
+	.pos 0 
+init:	irmovl Stack, %esp  	# Set up stack pointer  
+	irmovl Stack, %ebp  	# Set up base pointer   
+	call Main		# Execute main program
+	halt			# Terminate program 
+
+# The linked list of 3 nodes
+	.align 4 	
+ele1: 
+        .long 0x00a
+        .long ele2
+ele2:
+        .long 0x0b0
+        .long ele3
+ele3:
+        .long 0xc00
+        .long 0	
+
+Main:	pushl %ebp 
+	rrmovl %esp,%ebp
+	irmovl $16, %eax
+	subl %eax, %esp
+	irmovl ele1, %ebx
+	pushl %ebx
+	call Sum		# Sum(list_ptr)
+	rrmovl %ebp,%esp
+	popl %ebp
+	ret 
+
+/* $begin sum-ys 0 */
+	# int Sum(list_ptr)
+Sum:	pushl %ebp
+	rrmovl %esp,%ebp
+	xorl %eax,%eax		# sum = 0
+	mrmovl 8(%ebp),%edx
+	andl   %edx,%edx	# Set condition codes
+	je     End
+Loop:	mrmovl 8(%ebp),%esi
+	mrmovl (%esi),%esi
+	addl %esi,%eax          # add to sum
+	mrmovl 8(%ebp),%esi          
+	mrmovl 4(%esi),%esi
+	rmmovl %esi,8(%ebp)
+	andl %esi,%esi
+	jne  Loop
+End:	rrmovl %ebp,%esp
+	popl %ebp
+	ret
+/* $end sum-ys 0 */
+
+# The stack starts here and grows to lower addresses
+	.pos 0x100		
+Stack:	 
+/* $end code-ysa */
+/* $end code-yso */
